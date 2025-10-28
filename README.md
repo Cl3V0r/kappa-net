@@ -6,12 +6,12 @@ This project formed my Bachelor Thesis at TU Dortmund 2018 that was conducted un
 
 This project combines **Monte Carlo simulations** of semiflexible polymers with **deep learning regression** to predict the bending stiffness κ from angular configurations.
 
-## 🧠 Overview
+## Overview
 - **Simulation:** Metropolis Monte Carlo of a polymer with bending energy `E = (κ/2) Σ (Δθ)^2`
 - **Goal:** Predict κ from sampled angular configurations using a neural network
 - **Tech Stack:** C++17 (simulation) + PyTorch (ML) + Python 3.11
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 0. Run simulation
 ```bash
