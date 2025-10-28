@@ -5,12 +5,13 @@ from torch.utils.data import DataLoader, TensorDataset, random_split
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import glob
 import os
 
 # ------------------------------
 # Configuration
 # ------------------------------
-DATA_PATH = "data/raw/konfig-kappa-15.csv"  # replace with your dataset
+RAW_DIR = "data/raw/"
 MODEL_DIR = "models"
 BATCH_SIZE = 32
 EPOCHS = 2000
@@ -23,18 +24,25 @@ torch.manual_seed(SEED)
 np.random.seed(SEED)
 
 # ------------------------------
-# Load dataset
+# Load and merge all CSVs
 # ------------------------------
-df = pd.read_csv(DATA_PATH, delim_whitespace=True, header=None, error_bad_lines=False)
-dataset = df.values.astype(np.float32)
+all_files = glob.glob(RAW_DIR + "config_kappa_*.csv")
+if len(all_files) == 0:
+    raise RuntimeError(f"No files found in {RAW_DIR}")
 
+dfs = [pd.read_csv(f, delim_whitespace=True, header=None, on_bad_lines='skip') for f in all_files]
+df = pd.concat(dfs, ignore_index=True)
+
+dataset = df.values.astype(np.float32)
 X = dataset[:, :-1]  # angles
 Y = dataset[:, -1:]  # kappa
 
+# ------------------------------
+# PyTorch dataset and split
+# ------------------------------
 X_tensor = torch.tensor(X)
 Y_tensor = torch.tensor(Y)
 
-# Create dataset and split
 full_dataset = TensorDataset(X_tensor, Y_tensor)
 val_size = int(len(full_dataset) * VALID_SPLIT)
 train_size = len(full_dataset) - val_size
@@ -85,7 +93,6 @@ for epoch in range(1, EPOCHS+1):
         epoch_loss += loss.item() * xb.size(0)
     train_losses.append(epoch_loss / train_size)
 
-    # Validation
     model.eval()
     val_loss = 0.0
     with torch.no_grad():
@@ -98,7 +105,7 @@ for epoch in range(1, EPOCHS+1):
         print(f"Epoch {epoch}/{EPOCHS} | Train MSE: {train_losses[-1]:.5f} | Val MSE: {val_losses[-1]:.5f}")
 
 # ------------------------------
-# Save model and training history
+# Save model & training history
 # ------------------------------
 torch.save(model.state_dict(), os.path.join(MODEL_DIR, "simple_nn.pth"))
 np.savetxt(os.path.join(MODEL_DIR, "train_loss.csv"), np.array(train_losses), delimiter=",")
