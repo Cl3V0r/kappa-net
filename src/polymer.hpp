@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <gsl/gsl_rng.h>
+#include <algorithm>
 #include "vector.hpp"
 
 class PolymerSimulation {

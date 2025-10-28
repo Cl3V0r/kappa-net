@@ -64,7 +64,7 @@ void PolymerSimulation::run() {
         if (step % num_beads_ == 0)
             measure_tangent_correlation();
         if (step >= 10000 && step % 1000 == 0)
-            save_configuration("data/config-kappa-" + std::to_string(int(kappa_)) + ".csv", step);
+            save_configuration("data/raw/config-kappa-" + std::to_string(int(kappa_)) + ".csv", step);
     }
 
     // --- Normalize correlations once simulation ends ---
@@ -74,12 +74,11 @@ void PolymerSimulation::run() {
     }
 }
 
-
 void PolymerSimulation::save_configuration(const std::string &filename, int step) {
     std::ofstream data(filename, std::ios_base::app);
     for (int i = 0; i < num_beads_ - 1; ++i) {
         double dot = scalar_product(tangents_[i + 1], tangents_[i]);
-        data << acos(dot) << " ";
+        data << std::acos(std::clamp(dot, -1.0, 1.0)) << " ";
     }
     data << kappa_ << "\n";
 }
