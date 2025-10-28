@@ -211,3 +211,7 @@ __marimo__/
 
 # data files
 data/*
+models/*.csv
+models/*.h5
+models/*.pth 
+models/*.png
