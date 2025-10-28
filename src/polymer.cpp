@@ -4,13 +4,18 @@
 #include <cmath>
 #include <gsl/gsl_randist.h>
 
-PolymerSimulation::PolymerSimulation(int num_beads, double kappa, double beta, double rotation_angle, int sweeps)
-    : num_beads_(num_beads), kappa_(kappa), beta_(beta), rotation_angle_(rotation_angle), sweeps_(sweeps) {
+PolymerSimulation::PolymerSimulation(int num_beads, double kappa, double beta,
+                                     double rotation_angle, int sweeps,
+                                     unsigned long seed)
+    : num_beads_(num_beads), kappa_(kappa), beta_(beta),
+      rotation_angle_(rotation_angle), sweeps_(sweeps)
+{
     rng_ = gsl_rng_alloc(gsl_rng_mt19937);
-    gsl_rng_set(rng_, 0);
+    gsl_rng_set(rng_, seed);
+
     tangents_.resize(num_beads_);
-    tangent_corr_.resize(num_beads_, 0.0);
-    tangent_count_.resize(num_beads_, 0);
+    tangent_corr_.assign(num_beads_, 0.0);
+    tangent_count_.assign(num_beads_, 0);
 }
 
 void PolymerSimulation::initialize_chain() {

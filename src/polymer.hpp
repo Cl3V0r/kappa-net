@@ -9,7 +9,8 @@
 class PolymerSimulation {
 public:
     PolymerSimulation(int num_beads, double kappa, double beta,
-                      double rotation_angle, int sweeps);
+                      double rotation_angle, int sweeps,
+                      unsigned long seed = 0);
 
     void run();
     void save_configuration(const std::string &filename, int step);
