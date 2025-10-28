@@ -64,26 +64,25 @@ void PolymerSimulation::run() {
         metropolis_step();
 
     // Production
-    int save_every = 1000;  // save a configuration every 1000 sweeps
     for (int step = 0; step < sweeps_; ++step) {
         metropolis_step();
 
-        // Measure tangent correlations periodically
         if (step % num_beads_ == 0)
             measure_tangent_correlation();
 
-        // Save configuration periodically
-        if (step >= 10000 && step % save_every == 0) {
+        // Save configuration every save_every_ sweeps
+        if (step >= 10000 && step % save_every_ == 0) {
             std::string filename = "data/raw/config_kappa_" + std::to_string(int(kappa_)) + ".csv";
             save_configuration(filename, step);
         }
     }
 
-    // Normalize correlations after simulation
+    // Normalize correlations
     for (size_t i = 0; i < tangent_corr_.size(); ++i)
         if (tangent_count_[i] > 0)
             tangent_corr_[i] /= static_cast<double>(tangent_count_[i]);
 }
+
 
 void PolymerSimulation::save_configuration(const std::string &filename, int step) {
     std::ofstream data(filename, std::ios_base::app);  // append mode

@@ -13,6 +13,7 @@ public:
                       unsigned long seed = 0);
 
     void run();
+    void set_save_every(int n) { save_every_ = n; }
     void save_configuration(const std::string &filename, int step);
     double compute_energy() const;
     double compute_variance() const;
@@ -27,6 +28,7 @@ private:
     double beta_;
     double rotation_angle_;
     int sweeps_;
+    int save_every_ = 1000;   // default saving interval
 
     gsl_rng *rng_;
     std::vector<Vec> tangents_;
