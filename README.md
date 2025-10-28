@@ -15,6 +15,9 @@ This project combines **Monte Carlo simulations** of semiflexible polymers with 
 
 ### 1. Run simulation
 ```bash
-cd src
-g++ -std=c++17 main.cpp -o simulate
-./simulate
+mkdir build && cd build  
+cmake ..
+make -j
+cd .. 
+./build/polymer_sim
+python model/train.py
