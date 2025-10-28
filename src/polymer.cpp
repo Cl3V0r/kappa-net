@@ -52,35 +52,41 @@ void PolymerSimulation::measure_tangent_correlation() {
 }
 
 void PolymerSimulation::run() {
-    // --- Initialize chain ---
     initialize_chain();
-    // Warm-up phase
-    for (int step = 0; step < 100000; ++step) {
+
+    // Equilibration
+    for (int step = 0; step < 100000; ++step)
         metropolis_step();
-    }
-    // --- Main simulation loop ---
+
+    // Production
+    int save_every = 1000;  // save a configuration every 1000 sweeps
     for (int step = 0; step < sweeps_; ++step) {
         metropolis_step();
+
+        // Measure tangent correlations periodically
         if (step % num_beads_ == 0)
             measure_tangent_correlation();
-        if (step >= 10000 && step % 1000 == 0)
-            save_configuration("data/raw/config-kappa-" + std::to_string(int(kappa_)) + ".csv", step);
+
+        // Save configuration periodically
+        if (step >= 10000 && step % save_every == 0) {
+            std::string filename = "data/raw/config_kappa_" + std::to_string(int(kappa_)) + ".csv";
+            save_configuration(filename, step);
+        }
     }
 
-    // --- Normalize correlations once simulation ends ---
-    for (size_t i = 0; i < tangent_corr_.size(); ++i) {
+    // Normalize correlations after simulation
+    for (size_t i = 0; i < tangent_corr_.size(); ++i)
         if (tangent_count_[i] > 0)
             tangent_corr_[i] /= static_cast<double>(tangent_count_[i]);
-    }
 }
 
 void PolymerSimulation::save_configuration(const std::string &filename, int step) {
-    std::ofstream data(filename, std::ios_base::app);
+    std::ofstream data(filename, std::ios_base::app);  // append mode
     for (int i = 0; i < num_beads_ - 1; ++i) {
         double dot = scalar_product(tangents_[i + 1], tangents_[i]);
         data << std::acos(std::clamp(dot, -1.0, 1.0)) << " ";
     }
-    data << kappa_ << "\n";
+    data << kappa_ << "\n";  // store kappa as the last column
 }
 
 double PolymerSimulation::compute_energy() const {
