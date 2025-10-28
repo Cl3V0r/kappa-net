@@ -13,15 +13,22 @@ import os
 # ------------------------------
 RAW_DIR = "data/raw/"
 MODEL_DIR = "models"
-BATCH_SIZE = 32
+BATCH_SIZE = 256        # larger batch size for GPU
 EPOCHS = 2000
 LEARNING_RATE = 1e-3
 SEED = 42
 VALID_SPLIT = 0.2
+NUM_WORKERS = 4         # DataLoader parallelism
 
 os.makedirs(MODEL_DIR, exist_ok=True)
 torch.manual_seed(SEED)
 np.random.seed(SEED)
+
+# ------------------------------
+# Device (GPU if available)
+# ------------------------------
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 
 # ------------------------------
 # Load and merge all CSVs
@@ -37,20 +44,21 @@ dataset = df.values.astype(np.float32)
 X = dataset[:, :-1]  # angles
 Y = dataset[:, -1:]  # kappa
 
-
 # ------------------------------
 # PyTorch dataset and split
 # ------------------------------
-X_tensor = torch.tensor(X)
-Y_tensor = torch.tensor(Y)
+X_tensor = torch.tensor(X).to(device)
+Y_tensor = torch.tensor(Y).to(device)
 
 full_dataset = TensorDataset(X_tensor, Y_tensor)
 val_size = int(len(full_dataset) * VALID_SPLIT)
 train_size = len(full_dataset) - val_size
 train_ds, val_ds = random_split(full_dataset, [train_size, val_size])
 
-train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
-val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE)
+train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,
+                          num_workers=NUM_WORKERS, pin_memory=True)
+val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE,
+                        num_workers=NUM_WORKERS, pin_memory=True)
 
 # ------------------------------
 # Define simple feedforward model
@@ -59,17 +67,17 @@ class SimpleNN(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dim, 20),
+            nn.Linear(input_dim, 64),  # increased neurons for better GPU usage
             nn.ReLU(),
-            nn.Linear(20, 10),
+            nn.Linear(64, 32),
             nn.ReLU(),
-            nn.Linear(10, 1)
+            nn.Linear(32, 1)
         )
 
     def forward(self, x):
         return self.net(x)
 
-model = SimpleNN(X.shape[1])
+model = SimpleNN(X.shape[1]).to(device)
 
 # ------------------------------
 # Loss & optimizer
@@ -82,7 +90,7 @@ optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 # ------------------------------
 train_losses, val_losses = [], []
 
-for epoch in range(1, EPOCHS+1):
+for epoch in range(1, EPOCHS + 1):
     model.train()
     epoch_loss = 0.0
     for xb, yb in train_loader:
@@ -102,7 +110,7 @@ for epoch in range(1, EPOCHS+1):
             val_loss += criterion(out, yb).item() * xb.size(0)
     val_losses.append(val_loss / val_size)
 
-    if epoch % 100 == 0 or epoch == 1:
+    if epoch % 50 == 0 or epoch == 1:
         print(f"Epoch {epoch}/{EPOCHS} | Train MSE: {train_losses[-1]:.5f} | Val MSE: {val_losses[-1]:.5f}")
 
 # ------------------------------
@@ -115,7 +123,7 @@ np.savetxt(os.path.join(MODEL_DIR, "val_loss.csv"), np.array(val_losses), delimi
 # ------------------------------
 # Plot training history
 # ------------------------------
-plt.figure(figsize=(6,3))
+plt.figure(figsize=(6, 3))
 plt.plot(train_losses, label="Train MSE")
 plt.plot(val_losses, label="Validation MSE")
 plt.xlabel("Epoch")
