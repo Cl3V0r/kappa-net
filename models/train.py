@@ -13,25 +13,25 @@ import os
 # ------------------------------
 RAW_DIR = "data/raw/"
 MODEL_DIR = "models"
-BATCH_SIZE = 256        # larger batch size for GPU
+BATCH_SIZE = 256
 EPOCHS = 2000
 LEARNING_RATE = 1e-3
 SEED = 42
 VALID_SPLIT = 0.2
-NUM_WORKERS = 4         # DataLoader parallelism
+NUM_WORKERS = 0  # Safe for CUDA initialization issues
 
 os.makedirs(MODEL_DIR, exist_ok=True)
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 
 # ------------------------------
-# Device (GPU if available)
+# Device
 # ------------------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 # ------------------------------
-# Load and merge all CSVs
+# Load & merge CSVs
 # ------------------------------
 all_files = glob.glob(RAW_DIR + "config_kappa_*.csv")
 if len(all_files) == 0:
@@ -45,12 +45,13 @@ X = dataset[:, :-1]  # angles
 Y = dataset[:, -1:]  # kappa
 
 # ------------------------------
-# PyTorch dataset and split
+# TensorDataset (CPU tensors)
 # ------------------------------
-X_tensor = torch.tensor(X).to(device)
-Y_tensor = torch.tensor(Y).to(device)
-
+X_tensor = torch.tensor(X)
+Y_tensor = torch.tensor(Y)
 full_dataset = TensorDataset(X_tensor, Y_tensor)
+
+# Train/Validation split
 val_size = int(len(full_dataset) * VALID_SPLIT)
 train_size = len(full_dataset) - val_size
 train_ds, val_ds = random_split(full_dataset, [train_size, val_size])
@@ -61,13 +62,13 @@ val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE,
                         num_workers=NUM_WORKERS, pin_memory=True)
 
 # ------------------------------
-# Define simple feedforward model
+# Simple feedforward model
 # ------------------------------
 class SimpleNN(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dim, 64),  # increased neurons for better GPU usage
+            nn.Linear(input_dim, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -94,6 +95,7 @@ for epoch in range(1, EPOCHS + 1):
     model.train()
     epoch_loss = 0.0
     for xb, yb in train_loader:
+        xb, yb = xb.to(device, non_blocking=True), yb.to(device, non_blocking=True)
         optimizer.zero_grad()
         out = model(xb)
         loss = criterion(out, yb)
@@ -106,6 +108,7 @@ for epoch in range(1, EPOCHS + 1):
     val_loss = 0.0
     with torch.no_grad():
         for xb, yb in val_loader:
+            xb, yb = xb.to(device, non_blocking=True), yb.to(device, non_blocking=True)
             out = model(xb)
             val_loss += criterion(out, yb).item() * xb.size(0)
     val_losses.append(val_loss / val_size)
@@ -121,7 +124,7 @@ np.savetxt(os.path.join(MODEL_DIR, "train_loss.csv"), np.array(train_losses), de
 np.savetxt(os.path.join(MODEL_DIR, "val_loss.csv"), np.array(val_losses), delimiter=",")
 
 # ------------------------------
-# Plot training history
+# Plot training curve
 # ------------------------------
 plt.figure(figsize=(6, 3))
 plt.plot(train_losses, label="Train MSE")
