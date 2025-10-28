@@ -30,12 +30,13 @@ all_files = glob.glob(RAW_DIR + "config_kappa_*.csv")
 if len(all_files) == 0:
     raise RuntimeError(f"No files found in {RAW_DIR}")
 
-dfs = [pd.read_csv(f, delim_whitespace=True, header=None, on_bad_lines='skip') for f in all_files]
+dfs = [pd.read_csv(f, sep=r'\s+', header=None, on_bad_lines='skip') for f in all_files]
 df = pd.concat(dfs, ignore_index=True)
 
 dataset = df.values.astype(np.float32)
 X = dataset[:, :-1]  # angles
 Y = dataset[:, -1:]  # kappa
+
 
 # ------------------------------
 # PyTorch dataset and split
