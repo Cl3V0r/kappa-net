@@ -1,6 +1,6 @@
 # kappa-net
 
-This project formed my Bachelor Thesis at TU Dortmund 2015 that was conducted under the supervision of Jan Kierfeld and is here republished using more modern libraries.
+This project formed my Bachelor Thesis at TU Dortmund 2018 that was conducted under the supervision of Jan Kierfeld and is here republished using more modern libraries.
 
 # Inferring Polymer Bending Stiffness with Neural Networks
 
