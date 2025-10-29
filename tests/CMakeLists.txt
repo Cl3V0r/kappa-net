@@ -26,3 +26,14 @@ target_link_libraries(test_tangent_corr
 include(CTest)
 include(Catch)
 catch_discover_tests(test_tangent_corr)
+
+add_executable(test_vector_distribution
+    test_vector_distribution.cpp
+    ${PROJECT_SOURCE_DIR}/src/vector.cpp
+)
+target_link_libraries(test_vector_distribution
+    PRIVATE
+    GSL::gsl
+    Catch2::Catch2WithMain
+)
+catch_discover_tests(test_vector_distribution)
