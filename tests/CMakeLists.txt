@@ -31,6 +31,7 @@ add_executable(test_vector_distribution
     test_vector_distribution.cpp
     ${PROJECT_SOURCE_DIR}/src/vector.cpp
 )
+target_compile_definitions(test_vector_distribution PRIVATE PROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 target_link_libraries(test_vector_distribution
     PRIVATE
     GSL::gsl

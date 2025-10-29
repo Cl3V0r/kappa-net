@@ -7,6 +7,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <filesystem>
+#include <iostream>
 
 TEST_CASE("Generated vectors are uniformly distributed in cone", "[vector_sampling]") {
     const double angle = 0.5;  // radians
@@ -19,14 +20,17 @@ TEST_CASE("Generated vectors are uniformly distributed in cone", "[vector_sampli
     cos_thetas.reserve(N);
     phis.reserve(N);
 
-    // Optional diagnostic: write samples
-    bool write_csv = std::getenv("WRITE_CSV") != nullptr;
+    const char* write_csv_env = std::getenv("WRITE_CSV");
+    bool write_csv = (write_csv_env && std::string(write_csv_env) == "1");
     std::ofstream csv_file;
+
     if (write_csv) {
-        std::filesystem::create_directories("tests/data");
-        csv_file.open("tests/data/vector_samples.csv");
+        std::string base_dir = std::string(PROJECT_SOURCE_DIR) + "/data";
+        std::filesystem::create_directories(base_dir);
+        csv_file.open(base_dir + "/vector_samples.csv");
         csv_file << "x,y,z\n";
     }
+
 
     for (int i = 0; i < N; ++i) {
         Vec r = get_random_vector_fast(v0, angle, rng);
@@ -39,12 +43,15 @@ TEST_CASE("Generated vectors are uniformly distributed in cone", "[vector_sampli
         if (write_csv) {
             csv_file << r.x << "," << r.y << "," << r.z << "\n";
         }
+
     }
+
 
     if (write_csv) {
         csv_file.close();
         WARN("Wrote 100k samples to tests/data/vector_samples.csv for visualization.");
     }
+
 
     gsl_rng_free(rng);
 
