@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-df = pd.read_csv("tests/data/vector_samples.csv")
+df = pd.read_csv("data/vector_samples.csv")
 
 # 3D scatter
 fig = plt.figure(figsize=(6,6))
