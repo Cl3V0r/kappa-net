@@ -56,6 +56,39 @@ Vec get_random_vector(const Vec &v, double angle, gsl_rng *rng) {
     }
 }
 
+Vec get_random_vector_fast(const Vec &v, double angle, gsl_rng *rng) {
+    // Normalize input vector v
+    Vec axis = v;
+    double norm = axis.magnitude();
+    if (norm == 0.0)
+        return Vec(1, 0, 0);
+    axis = axis * (1.0 / norm);
+
+    // Uniform sampling in cone
+    double cos_angle = std::cos(angle);
+    double cos_theta = gsl_rng_uniform(rng) * (1.0 - cos_angle) + cos_angle;
+    double sin_theta = std::sqrt(1.0 - cos_theta * cos_theta);
+    double phi = gsl_rng_uniform(rng) * 2.0 * M_PI;
+
+    // Construct orthonormal basis (u, w)
+    Vec u;
+    if (std::fabs(axis.x) > 0.1 || std::fabs(axis.y) > 0.1) {
+        u = Vec(-axis.y, axis.x, 0.0);
+    } else {
+        u = Vec(0.0, -axis.z, axis.y);
+    }
+    double u_norm = u.magnitude();
+    if (u_norm == 0.0) u = Vec(1, 0, 0);
+    else u = u * (1.0 / u_norm);
+    Vec w = cross_product(axis, u);
+
+    // Combine in cone coordinates
+    Vec result = (u * (sin_theta * std::cos(phi)) +
+                  w * (sin_theta * std::sin(phi)) +
+                  axis * cos_theta);
+    return result * (1.0 / result.magnitude());
+}
+
 Vec cross_product(const Vec &a, const Vec &b) {
     Vec result;
     result.x = a.y * b.z - b.y * a.z;

@@ -24,6 +24,7 @@ public:
 
 // Utility functions
 Vec get_random_vector(const Vec &v, double angle, gsl_rng *rng);
+Vec get_random_vector_fast(const Vec &v, double angle, gsl_rng *rng);
 Vec cross_product(const Vec &a, const Vec &b);
 double scalar_product(const Vec &a, const Vec &b);
 
