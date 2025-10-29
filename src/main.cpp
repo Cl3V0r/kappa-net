@@ -22,7 +22,7 @@ int main() {
 
     // Sweep over multiple kappa values
     std::vector<double> kappa_values;
-    for (double k = 5.0; k <= 20.0; k += 1.0)
+    for (double k = 5.0; k <= 20.0; k += 0.1)
         kappa_values.push_back(k);
 
     // Ensure output folder exists
@@ -41,8 +41,8 @@ int main() {
         sim.set_save_every(save_every);
 
         sim.run();
-
-        std::string filename = out_dir.string() + "config_kappa_" + std::to_string(int(kappa)) + ".csv";
+        std::string kappa_str = std::to_string(round(kappa * 10) / 10); // round to 1 decimal place
+        std::string filename = out_dir.string() + "config_kappa_" + kappa_str + ".csv";
         sim.save_configuration(filename, sweeps);
 
         std::cout << "Saved configurations to " << filename << std::endl;
